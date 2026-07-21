@@ -1,0 +1,977 @@
+{
+  "name": "Post-meeting automation",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1ReHqSszPt7GsLeGR0qZ0AF3gL4OPedro",
+          "mode": "list",
+          "cachedResultName": "n8n meet videos",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1ReHqSszPt7GsLeGR0qZ0AF3gL4OPedro"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3ff608ce-d25f-42a0-8d10-607944ece4e5",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Cd1BBjoopDUve34M",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Google Drive Trigger').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "fileName": "={{ $('Google Drive Trigger').item.json.name }}.mp4"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        528,
+        0
+      ],
+      "id": "dd8a5c76-eb7a-4b64-a9e0-057d97c576d0",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Cd1BBjoopDUve34M",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "8955777818",
+        "message": "🎙 Pobrano nowe nagranie ze spotkania.\nWybierz z poniższych opcji, co AI ma z nim zrobić:",
+        "responseType": "customForm",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "wybor_akcji",
+              "fieldType": "radio",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "1. 📝 Szybkie notatki"
+                  },
+                  {
+                    "option": "2. ✅ Zadania do wykonania"
+                  },
+                  {
+                    "option": "3. 📊 Prezentacja follow-up"
+                  },
+                  {
+                    "option": "4. ❌ Nie podejmuj akcji"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        128,
+        0
+      ],
+      "id": "7666500c-6389-4b73-b650-868ec5b0ceca",
+      "name": "Send message and wait for response",
+      "webhookId": "910542d5-ffe0-4a2b-a77c-6ceb122cee13",
+      "credentials": {
+        "telegramApi": {
+          "id": "QsmSL4hmfA8vtnhc",
+          "name": "MICHALSON"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        832,
+        0
+      ],
+      "id": "de4732b6-6749-43bf-9c3b-1076eac66ebb",
+      "name": "Transcribe a recording",
+      "credentials": {
+        "openAiApi": {
+          "id": "iC0rPhpds7bBIPjw",
+          "name": "api; me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "apiKey",
+        "outputFormat": "mp3",
+        "additionalOptions": "={\n  \"audio_bitrate\": 64\n}"
+      },
+      "type": "@cloudconvert/n8n-nodes-cloudconvert.cloudConvert",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ],
+      "id": "e9e98864-5b5f-4e5e-a865-6d3221f9dc77",
+      "name": "Convert a file",
+      "credentials": {
+        "cloudConvertApi": {
+          "id": "FFef1cHAkAfSK4M2",
+          "name": "CloudConvert account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "111c8c82-bc1e-4ec1-92a1-70e517dc0611",
+              "leftValue": "={{ $json.data.wybor_akcji }}",
+              "rightValue": "4. ❌ Nie podejmuj akcji ",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        288,
+        16
+      ],
+      "id": "9c74a16b-62e3-42da-b310-b50ea4cdaf36",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Send message and wait for response').item.json.data.wybor_akcji }}",
+                    "rightValue": "1.",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "533f8fda-a884-48f8-b753-de4d3388fd8a"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "fast notes"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ef46c869-e3af-4db8-8494-a039ea69135c",
+                    "leftValue": "={{ $('Send message and wait for response').item.json.data.wybor_akcji }}",
+                    "rightValue": "2.",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "tasks"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "01d25800-9bef-4d53-8f10-55c4faa5bdcf",
+                    "leftValue": "={{ $('Send message and wait for response').item.json.data.wybor_akcji }}",
+                    "rightValue": "3.",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "presentation"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "aac35907-2bcb-49bf-9795-3db63a9edf96",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "esteś asystentem tworzącym zwięzłe, przejrzyste notatki. Przeanalizuj poniższą transkrypcję i wyciągnij z niej kluczowe wnioski w punktach."
+            },
+            {
+              "content": "={{ $('Transcribe a recording').item.json.text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1232,
+        -192
+      ],
+      "id": "7da42e84-60f0-462b-bb28-c94646c2a153",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "iC0rPhpds7bBIPjw",
+          "name": "api; me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "8955777818",
+        "text": "=📝 *Szybkie notatki z nagrania:*  \n{{ $json.output[0].content[0].text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1536,
+        -192
+      ],
+      "id": "0202ea91-740b-47b2-b31c-e24439b37d6c",
+      "name": "Send a text message",
+      "webhookId": "d6f86fab-ec57-4fcf-af1d-666c38c4e6f2",
+      "credentials": {
+        "telegramApi": {
+          "id": "QsmSL4hmfA8vtnhc",
+          "name": "MICHALSON"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "werewka.stas@gmail.com",
+        "subject": "[Notatki] Nowe podsumowanie nagrania",
+        "emailType": "text",
+        "message": "=Cześć!  Oto Twoje szybkie notatki wygenerowane z nagrania:  \n{{ $json.result.text }} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1728,
+        -192
+      ],
+      "id": "be12aa49-bd91-4957-9e05-87951cb2477c",
+      "name": "Send a message",
+      "webhookId": "74cce64c-1212-4fcc-82b1-e7759bf39910",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Jesteś asystentem zarządzającym zadaniami. Przeanalizuj transkrypcję i wyciągnij z niej konkretne zadania do wykonania. Zformatuj je jako przejrzystą listę w punktach (np. zadanie, osoba odpowiedzialna, termin – jeśli padł)."
+            },
+            {
+              "content": "={{ $('Transcribe a recording').item.json.text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "ce325cb9-6de9-4d74-afa3-b3ec99aceb66",
+      "name": "Message a model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "iC0rPhpds7bBIPjw",
+          "name": "api; me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "8955777818",
+        "message": "=📋 *Propozycja zadań do wysłania do zespołu:*\n\n{{ $json.output[0].content[0].text }}\n\nCzy zatwierdzasz wysyłkę tej listy do zespołu na maila?",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        0
+      ],
+      "id": "d81231fc-f27f-4c0a-b938-d46fd6fd3360",
+      "name": "Send message and wait for response1",
+      "webhookId": "26881911-5157-4f2e-b154-45f9dcffb8a7",
+      "credentials": {
+        "telegramApi": {
+          "id": "QsmSL4hmfA8vtnhc",
+          "name": "MICHALSON"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d6d473f6-f2b0-4098-9869-b3b89dde1c85",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1744,
+        16
+      ],
+      "id": "3f3cf349-d056-4de1-9e14-2afa7f8a3145",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "sendTo": "werewka.stas@gmail.com , werewkastas5@gmail.com",
+        "subject": "[Zadania] Nowe akcje do wykonania z nagrania",
+        "emailType": "text",
+        "message": "=Cześć Wszystkim!  \nOto lista zadań do wykonania przygotowana na podstawie ostatniego nagrania:\n\n{{ $('Message a model1').item.json.output[0].content[0].text }} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1952,
+        -80
+      ],
+      "id": "ceb24656-57fe-40d8-9d4f-f8fde8b5ee1c",
+      "name": "Send a message1",
+      "webhookId": "c65684bb-de26-40e5-8986-29fe1729de2c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Jesteś precyzyjnym asystentem przetwarzającym transkrypcje spotkań. Twoim zadaniem jest przeanalizowanie tekstowej transkrypcji i wyciągnięcie z niej kluczowych informacji w formacie JSON.\nZasady:\n\t1.\tTytuł prezentacji (tytul_prezentacji): Stwórz zwięzły, trafny tytuł określający główny temat rozmowy.\n\t2.\tKwestie/Problemy (problem_1, problem_2, problem_3): Wyciągnij kluczowe wątki, wyzwania lub tematy poruszone w rozmowie.\n\t3.\tUstalenia/Rozwiązania (rozwiazanie_1, rozwiazanie_2, rozwiazanie_3): Wyciągnij konkretne wnioski, podjęte decyzje lub omówione kolejne kroki.\n\t4.\tTrzymaj się faktów: Wszystkie punkty muszą bezpośrednio odwoływać się do treści transkrypcji. Nie wymyślaj abstrakcyjnych usług ani zewnętrznych teorii.\nWygeneruj wyłącznie poprawny JSON zawierający klucze: tytul_prezentacji, problem_1, problem_2, problem_3, rozwiazanie_1, rozwiazanie_2, rozwiazanie_3."
+            },
+            {
+              "content": "={{ $('Transcribe a recording').item.json.text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_object"
+            }
+          },
+          "temperature": 0.5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1248,
+        224
+      ],
+      "id": "90cbba45-5e99-4ad1-8c3d-65c8e2cc4230",
+      "name": "Message a model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "iC0rPhpds7bBIPjw",
+          "name": "api; me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pobieramy sparsowane dane z poprzedniego węzła\nconst parsedData = $input.item.json.output[0].content[0].text;\n\n// Szablon HTML slajdów\nconst htmlTemplate = `<!DOCTYPE html>\n<html lang=\"pl\">\n<head>\n<meta charset=\"UTF-8\">\n<style>\n  @page { size: A4 landscape; margin: 0; }\n  * { box-sizing: border-box; }\n  body { margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #0f172a; color: #f8fafc; }\n  .slide { width: 297mm; height: 210mm; page-break-after: always; padding: 25mm; position: relative; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }\n  .slide-header { border-bottom: 2px solid #3b82f6; padding-bottom: 12px; margin-bottom: 25px; }\n  .slide-tag { font-size: 11pt; text-transform: uppercase; letter-spacing: 2px; color: #3b82f6; font-weight: 700; margin-bottom: 6px; }\n  h1.slide-title { font-size: 26pt; margin: 0; color: #ffffff; font-weight: 700; }\n  .content { font-size: 14pt; line-height: 1.6; color: #cbd5e1; }\n  ul.points { margin: 20px 0; padding-left: 20px; }\n  ul.points li { margin-bottom: 14px; color: #e2e8f0; }\n  .highlight-box { background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; padding: 18px 24px; margin-top: 25px; font-size: 13pt; color: #93c5fd; }\n  .footer { position: absolute; bottom: 15mm; left: 25mm; right: 25mm; border-top: 1px solid #334155; padding-top: 10px; font-size: 9pt; color: #64748b; }\n  .footer-left { float: left; } .footer-right { float: right; }\n  .slide.cover { padding-top: 55mm; background: linear-gradient(135deg, #020617 0%, #0f172a 100%); }\n  .cover-title { font-size: 36pt; font-weight: 800; color: #ffffff; margin-bottom: 15px; }\n  .cover-subtitle { font-size: 18pt; color: #94a3b8; margin-bottom: 40px; }\n  .cover-badge { background: #2563eb; color: #ffffff; padding: 6px 16px; border-radius: 20px; font-size: 10pt; font-weight: 600; text-transform: uppercase; }\n</style>\n</head>\n<body>\n\n  <!-- SLIDE 1: Cover -->\n  <div class=\"slide cover\">\n    <span class=\"cover-badge\">Prezentacja Follow-Up</span>\n    <h1 class=\"cover-title\">${parsedData.tytul_prezentacji || 'Podsumowanie Spotkania'}</h1>\n    <div class=\"cover-subtitle\">Podsumowanie ustaleń oraz kolejne kroki współpracy</div>\n    <div class=\"footer\">\n      <span class=\"footer-left\">Przygotowano automatycznie z nagrania</span>\n      <span class=\"footer-right\">Prywatne & Poufne</span>\n    </div>\n  </div>\n\n  <!-- SLIDE 2: Problem -->\n  <div class=\"slide\">\n    <div class=\"slide-header\">\n      <div class=\"slide-tag\">Kluczowe Wyzwania</div>\n      <h1 class=\"slide-title\">Analiza Sytuacji i Potrzeb</h1>\n    </div>\n    <div class=\"content\">\n      <p>Na podstawie naszej rozmowy zidentyfikowaliśmy następujące obszary wymagające usprawnienia:</p>\n      <ul class=\"points\">\n        <li><strong>Obszar 1:</strong> ${parsedData.problem_1 || ''}</li>\n        <li><strong>Obszar 2:</strong> ${parsedData.problem_2 || ''}</li>\n        <li><strong>Obszar 3:</strong> ${parsedData.problem_3 || ''}</li>\n      </ul>\n      <div class=\"highlight-box\">\n        💡 <strong>Wniosek:</strong> Rozwiązanie tych kwestii pozwoli na bezpośrednią optymalizację procesów w zespole.\n      </div>\n    </div>\n    <div class=\"footer\">\n      <span class=\"footer-left\">${parsedData.tytul_prezentacji || 'Podsumowanie'}</span>\n      <span class=\"footer-right\">Slajd 2</span>\n    </div>\n  </div>\n\n  <!-- SLIDE 3: Rozwiązanie -->\n  <div class=\"slide\">\n    <div class=\"slide-header\">\n      <div class=\"slide-tag\">Rekomendacja</div>\n      <h1 class=\"slide-title\">Proponowane Rozwiązanie</h1>\n    </div>\n    <div class=\"content\">\n      <p>Oto proponowany plan działania dopasowany do omówionych potrzeb:</p>\n      <ul class=\"points\">\n        <li>${parsedData.rozwiazanie_1 || ''}</li>\n        <li>${parsedData.rozwiazanie_2 || ''}</li>\n        <li>${parsedData.rozwiazanie_3 || ''}</li>\n      </ul>\n    </div>\n    <div class=\"footer\">\n      <span class=\"footer-left\">${parsedData.tytul_prezentacji || 'Podsumowanie'}</span>\n      <span class=\"footer-right\">Slajd 3</span>\n    </div>\n  </div>\n\n</body>\n</html>`;\n\nreturn {\n  html: htmlTemplate,\n  tytul: parsedData.tytul_prezentacji || 'Prezentacja'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        224
+      ],
+      "id": "8d9f84c4-b95f-484f-b476-ece2695477c6",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "html_content": "={{ $json.html }}",
+        "viewPortWidth": 1920,
+        "viewPortHeight": 1080,
+        "output_format": "file",
+        "output_filename": "={{ $json.tytul }}"
+      },
+      "type": "n8n-nodes-htmlcsstopdf.htmlcsstopdf",
+      "typeVersion": 1,
+      "position": [
+        1664,
+        224
+      ],
+      "id": "86280a57-1fd1-44bc-853a-24add259ed4c",
+      "name": "Convert HTML to PDF",
+      "credentials": {
+        "htmlcsstopdfApi": {
+          "id": "Onkah0KCoT4BKve1",
+          "name": "HTML to PDF account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendDocument",
+        "chatId": "8955777818",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1824,
+        224
+      ],
+      "id": "35be9992-cb61-4acd-9753-5a18b26dc48b",
+      "name": "Send a document",
+      "webhookId": "73152df7-e489-40c0-93c8-97b09ce0ecba",
+      "credentials": {
+        "telegramApi": {
+          "id": "QsmSL4hmfA8vtnhc",
+          "name": "MICHALSON"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "8955777818",
+        "message": "📊 Wygenerowano nową prezentację PDF!\nCzy zatwierdzasz wysyłkę do klienta?",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2000,
+        224
+      ],
+      "id": "4436d214-1b0d-431c-b54b-b3f7889691ab",
+      "name": "Send message and wait for response2",
+      "webhookId": "edba1695-3ee3-41ee-b5f8-48e7dc089a00",
+      "credentials": {
+        "telegramApi": {
+          "id": "QsmSL4hmfA8vtnhc",
+          "name": "MICHALSON"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "=Werewka.stas@gmail.com , {{ $('Send message and wait for response3').item.json.data.text }}",
+        "subject": "Podsumowanie spotkania & Prezentacja follow-up",
+        "message": "=<!DOCTYPE html>\n<html lang=\"pl\">\n<head>\n  <meta charset=\"UTF-8\">\n  <style>\n    body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }\n    .container { max-width: 600px; background: #ffffff; margin: 0 auto; padding: 30px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }\n    .header { border-bottom: 2px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px; }\n    .header h2 { margin: 0; color: #0f172a; font-size: 20px; }\n    .content { line-height: 1.6; font-size: 15px; color: #334155; }\n    .badge-box { background: #f0f9ff; border-left: 4px solid #0284c7; padding: 12px 16px; margin: 20px 0; border-radius: 0 8px 8px 0; font-size: 14px; color: #0369a1; }\n    .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #f1f5f9; font-size: 12px; color: #94a3b8; text-align: center; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h2>Podsumowanie Spotkania</h2>\n    </div>\n    <div class=\"content\">\n      <p>Dzień dobry,</p>\n      <p>Dziękuję za poświęcony czas podczas naszego ostatniego spotkania.</p>\n      \n      <div class=\"badge-box\">\n        📎 <strong>Załącznik:</strong> W załączniku tej wiadomości znajdziesz przygotowaną prezentację PDF zawierającą podsumowanie omówionych kwestii oraz proponowanych kroków.\n      </div>\n\n      <p>W razie jakichkolwiek pytań lub potrzeby doprecyzowania ustaleń, pozostaję do dyspozycji.</p>\n      <p>Pozdrawiam serdecznie,</p>\n    </div>\n    <div class=\"footer\">\n      Wiadomość wygenerowana automatycznie na podstawie ustaleń ze spotkania.\n    </div>\n  </div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2672,
+        224
+      ],
+      "id": "a081ea09-8626-43e8-b9b0-777a08a1dc86",
+      "name": "Send a message2",
+      "webhookId": "8a7f04a0-76bc-4ca8-9223-a58e56186154",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "8955777818",
+        "message": "Wprowadź adres e-mail klienta aby wysłać mu maila:",
+        "responseType": "freeText",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2368,
+        224
+      ],
+      "id": "8445d895-3f3d-42a3-8b84-5d50a2231796",
+      "name": "Send message and wait for response3",
+      "webhookId": "9a2730e5-816c-43b3-9be9-df84931038f4",
+      "credentials": {
+        "telegramApi": {
+          "id": "QsmSL4hmfA8vtnhc",
+          "name": "MICHALSON"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "09c985f2-1fda-4bd2-bea9-50a6736b2106",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2144,
+        240
+      ],
+      "id": "b08f7f3e-6659-4ea3-9198-a83180610708",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d0c3dadc-8d8d-42fa-8453-d47f9cff8f5f",
+              "name": "data",
+              "value": "={{ $('Convert HTML to PDF').item.binary.data }}",
+              "type": "binary"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2528,
+        224
+      ],
+      "id": "1dc21ed3-5fad-407c-8512-e5eb03bdd7e6",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Convert a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert a file": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message a model2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Convert HTML to PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert HTML to PDF": {
+      "main": [
+        [
+          {
+            "node": "Send a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a document": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response2": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response3": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c411e7cf-6582-42eb-8d8c-e8a49b78819a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "afdd7c7f9c788226d2e3c76e9233b868ba8dcced4ecd9bae92237ed76e9755b7"
+  },
+  "nodeGroups": [],
+  "id": "FYA7Sw3UJ6uEiEAw",
+  "tags": []
+}
