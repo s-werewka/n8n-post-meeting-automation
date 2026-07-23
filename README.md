@@ -1,37 +1,28 @@
 # n8n-post-meeting-automation
-# 🎙️ Post-Meeting Automation Workflow (n8n + OpenAI + Telegram + Gmail)
-
-Kompleksowy workflow w n8n automatyzujący proces przetwarzania nagrań wideo/audio ze spotkań biznesowych. System pobiera plik z Google Drive, dokonuje transkrypcji i konwersji, a następnie udostępnia interaktywne menu na Telegramie z wyższym stopniem automatyzacji.
-
-![n8n Workflow Structure](automation-postmeeting.png)
-
-## 🚀 Główne Funkcjonalności
-
-1. **Google Drive & CloudConvert Integration:** Automatyczne wykrywanie nowego nagrania w wybranym folderze oraz konwersja plików wideo do optymalnego formatu audio (`.mp3`).
-2. **AI Audio Transcribe:** Przetwarzanie mowy na tekst za pomocą modelu Whisper / OpenAI.
-3. **Interaktywne Menu na Telegramie:** Decydowanie "Human-in-the-loop" o ścieżce przetworzenia nagrania:
-   - 📝 **Szybkie notatki:** Streszczenie kluczowych ustaleń wysyłane na Telegram & E-mail.
-   - ✅ **Zadania (Action Items):** Wyciąganie listy zadań wraz z systemem akceptacji przed wysyłką do zespołu.
-   - 📊 **Prezentacja Follow-Up (PDF):** Automatyczna generacja prezentacji HTML/CSS i konwersja do profesjonalnego pliku PDF.
-4. **HTML-to-PDF Engine:** Projektowanie dynamicznych slajdów biznesowych w kodzie HTML/CSS zintegrowanych z danymi strukturyzowanymi JSON z OpenAI.
-5. **Interactive Email Dispatch:** Zbieranie adresu e-mail klienta przez Telegram i wysyłka dedykowanego maila HTML z załączonym plikiem PDF.
-
-## 🛠️ Technologie i Węzły
-
-- **Automation:** n8n (v1.x)
-- **AI Models:** OpenAI API (`gpt-4o-mini`, Audio Transcription)
-- **Messaging & HITL:** Telegram Bot API (`sendAndWait`, `sendDocument`)
-- **Document Generation:** Custom JavaScript Code (HTML/CSS layout) + `n8n-nodes-htmlcsstopdf`
-- **Storage & Mail:** Google Drive API, CloudConvert API, Gmail API
-
-## 📥 Instrukcja Instalacji
-
-1. Pobierz plik workflow z repozytorium (`workflow.json`).
-2. W swoim środowisku **n8n** wybierz `Import from File` i wklej zawartość.
-3. Podepnij wymagane credentials:
-   - OpenAI API Key
-   - Telegram Bot Credentials
-   - Google Drive & Gmail OAuth2
-   - CloudConvert API Key
-   - HTML2PDF API Key
-4. Aktywuj workflow!
+🎙️ Post-Meeting Automation Workflow (n8n + OpenAI + Telegram + Gmail)
+A comprehensive n8n workflow that automates the processing of business meeting video and audio recordings. The system fetches files from Google Drive, handles transcription and conversion, and provides an interactive Telegram menu featuring human-in-the-loop automation.
+🚀 Key Features
+•	Google Drive & CloudConvert Integration: Automatically detects new recordings in a selected folder and converts video files into optimal audio format (.mp3).
+•	AI Audio Transcribe: Processes speech-to-text using the OpenAI Whisper model.
+•	Interactive Telegram Menu: Human-in-the-loop decision-making for processing paths:
+•	Quick Notes: Summary of key decisions sent to Telegram and email.
+•	Action Items: Task list extraction featuring an approval system prior to team dispatch.
+•	Follow-Up Presentation (PDF): Automatic HTML/CSS layout generation converted into a professional PDF file.
+•	HTML-to-PDF Engine: Dynamic business slide design in HTML/CSS integrated with structured JSON data from OpenAI.
+•	Interactive Email Dispatch: Collects client email addresses via Telegram and dispatches a dedicated HTML email with the attached PDF.
+🛠️ Technologies & Nodes
+•	Automation: n8n (v1.x)
+•	AI Models: OpenAI API (GPT-4o-mini, Audio Transcription)
+•	Messaging & HITL: Telegram Bot API (sendAndWait, sendDocument)
+•	Document Generation: Custom JavaScript Code (HTML/CSS layout) + HTML-to-PDF engine
+•	Storage & Mail: Google Drive API, CloudConvert API, Gmail API
+📥 Installation Guide
+	1.	Download the workflow file from the repository (workflow.json).
+	2.	Open your n8n environment, select Import from File, and paste the content.
+	3.	Configure the required credentials:
+•	OpenAI API Key
+•	Telegram Bot Credentials
+•	Google Drive & Gmail OAuth2
+•	CloudConvert API Key
+•	HTML2PDF API Key
+	4.	Activate the workflow!
